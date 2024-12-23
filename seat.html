@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大閱覽室留讀紀錄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .seat-container {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr); /* 14列 */
+            grid-template-rows: repeat(7, 1fr); /* 7行 */
+            gap: 5px; /* 減小間隔，讓座位更緊密 */
+            justify-content: center;
+        }
+        .seat-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .seat-number {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+        .seat {
+            width: 50px; /* 縮小座位大小 */
+            height: 50px; /* 縮小座位大小 */
+            line-height: 50px; /* 使文字垂直居中 */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .seat[data-status="無人"] {
+            background-color: #d4edda;
+        }
+        .seat[data-status="在座"] {
+            background-color: #f8d7da;
+        }
+        .seat[data-status="離席"] {
+            background-color: #ffeeba;
+        }
+        .info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>大閱覽室留讀紀錄</h1>
+    <div>
+        <label for="duty">值班人員：</label>
+        <input type="text" id="duty" placeholder="輸入值班人員">
+    </div>
+    <div id="dateTime" class="info"></div>
+    <div class="seat-container" id="seatContainer"></div>
+    <button onclick="savePage()">儲存</button>
+
+    <script>
+        const seatContainer = document.getElementById("seatContainer");
+        const dateTimeDisplay = document.getElementById("dateTime");
+
+        function updateDateTime() {
+            const now = new Date();
+            dateTimeDisplay.textContent = `日期：${now.toLocaleDateString()} 時間：${now.toLocaleTimeString()}`;
+        }
+
+        function createSeat(index) {
+            const seatWrapper = document.createElement("div");
+            seatWrapper.className = "seat-wrapper";
+
+            const seatNumber = document.createElement("div");
+            seatNumber.className = "seat-number";
+            seatNumber.textContent = `座位 ${index}`;
+
+            const seat = document.createElement("div");
+            seat.className = "seat";
+            seat.textContent = "無人";
+            seat.dataset.status = "無人";
+            seat.dataset.index = index;
+
+            seat.addEventListener("click", () => {
+                const statusCycle = ["無人", "在座", "離席"];
+                const currentIndex = statusCycle.indexOf(seat.dataset.status);
+                const nextIndex = (currentIndex + 1) % statusCycle.length;
+                seat.dataset.status = statusCycle[nextIndex];
+                seat.textContent = statusCycle[nextIndex];
+            });
+
+            seatWrapper.appendChild(seatNumber);
+            seatWrapper.appendChild(seat);
+
+            return seatWrapper;
+        }
+
+        function initializeSeats() {
+            const seatCount = 94; // 設置94個座位
+            for (let i = 1; i <= seatCount; i++) {
+                const seat = createSeat(i);
+                seatContainer.appendChild(seat);
+            }
+        }
+
+        function savePage() {
+            const seatStates = [];
+            const seats = document.querySelectorAll(".seat");
+            seats.forEach(seat => {
+                seatStates.push({
+                    index: seat.dataset.index,
+                    status: seat.dataset.status
+                });
+            });
+
+            const file = new Blob([JSON.stringify(seatStates)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(file);
+            a.download = 'seat_management.json';
+            a.click();
+        }
+
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        initializeSeats();
+    </script>
+</body>
+</html>
